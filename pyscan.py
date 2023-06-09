@@ -11,6 +11,7 @@ import time
 yf.pdr_override
 # variables
 tickers = si.tickers_sp500()
+# tickers = ['AAPL', 'TSLA', 'AMZN', 'PLTR', 'AMD', 'NVDA']
 tickers = [item.replace(".", "-") for item in tickers]
 index_name = '^GSPC'
 start_date = datetime.datetime.now() - datetime.timedelta(days=365)
@@ -19,29 +20,31 @@ exportList = pd.DataFrame(columns=['Stock', "RS_Rating", "50 Day MA", "150 Day M
 return_multiples = []
 
 # index returns
-index_df = pdr.get_data_yahoo(index_name, start_date, end_date)
+index_df = yf.download(index_name, start=start_date, end=end_date)
 index_df['Percent Change'] = index_df['Adj Close'].pct_change()
 index_return = (index_df['Percent Change'] + 1).cumprod()[-1]
 
 # find top 30% performig stocks relative to the S&P 500
 for ticker in tickers:
     #download historical data as csv for each stock(makes the process faster)
-    df = pdr.get_data_yahoo(ticker, start_date, end_date)
+    df = yf.download(ticker, start=start_date, end=end_date)
     df.to_csv(f'{ticker}.csv')
 
     #calculating returns relative to the market(returns multiple)
-    df['Percent Change'] = df['Adj Close'].pct_change()
-    stock_return = (df['Percent Change'] + 1).cumprod()[-1]
+    if not df.empty:
+        df['Percent Change'] = df['Adj Close'].pct_change()
+        stock_return = (df['Percent Change'] + 1).cumprod()[-1]
 
-    returns_multiple = round((stock_return / index_return), 2)
-    returns_multiples.extend([returns_multiple])
+        returns_multiple = round((stock_return / index_return), 2)
+        return_multiples.extend([returns_multiple])
 
-    print(f'Ticker: {ticker}; Returns Multiple against S&P 500: {returns_multiple}\n')
-    time.sleep(1)
-
+        print(f'Ticker: {ticker}; Returns Multiple against S&P 500: {returns_multiple}\n')
+        time.sleep(1)
+    else:
+        print(f'Failed to get ticker {ticker}: No data available')
 # creating dataframe of only top 30%
-rs_df = pd.DataFrame(list(zip(tickers, returns_multiples)), columns=['Ticker', 'Returns_multiple'])
-rs_df['RS_Rating'] = rs_df.Returns_multiple.rank(pct=True) * 100
+rs_df = pd.DataFrame(list(zip(tickers, return_multiples)), columns=['Ticker', 'Return_multiples'])
+rs_df['RS_Rating'] = rs_df.Return_multiples.rank(pct=True) * 100
 rs_df = rs_df[rs_df.RS_Rating >= rs_df.RS_Rating.quantile(.70)]
 
 # checking minervini conditions of top 30% of stocks in given list
