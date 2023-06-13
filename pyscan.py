@@ -61,8 +61,13 @@ for stock in rs_stocks:
         moving_average_50 = df["SMA_50"][-1]
         moving_average_150 = df["SMA_150"][-1]
         moving_average_200 = df["SMA_200"][-1]
-        low_of_52week = round(min(df["Low"][-260]), 2)
-        high_of_52week = round(min(df["High"][-260]), 2)
+        if len(df) >= 260:
+            low_of_52week = round(min(df["Low"][-260:]), 2)
+            high_of_52week = round(min(df["High"][-260:]), 2)
+        else:
+            low_of_52week = round(min(df["Low"]),2)
+            high_of_52week = round(min(df["High"]),2)
+
         RS_Rating = round(rs_df[rs_df['Ticker']==stock].RS_Rating.tolist()[0])
 
         try:
@@ -93,6 +98,8 @@ for stock in rs_stocks:
 
         # if all conditions above are true, add stock to exportList
         if(condition_1 and condition_2 and condition_3 and condition_4 and condition_5 and condition_6 and condition_7):
+
+        # if(condition_1 and condition_2 and condition_3): 
             exportList = exportList.append({'Stock': stock, "RS_Rating": RS_Rating, "50 Day MA": moving_average_50, "150 Day MA": moving_average_150, "200 Day MA": moving_average_200, "52 Week Low": low_of_52week, "52 Week High": high_of_52week}, ignore_index=True)
             print(stock + " made the Minervini Requirements")
     except Exception as e:

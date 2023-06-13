@@ -1,5 +1,7 @@
 # import libraries
-from numpy.ma import concatenate
+import math
+import keras
+from numpy import concatenate
 from scipy.optimize import optimize
 from sklearn.utils import shuffle
 import yfinance as yf
@@ -70,13 +72,11 @@ predictions = model.predict(X_test)
 
 # denormalize the predictions
 # denormalized_predictions = scaler.inverse_transform(np.concatenate((X_test.reshape(X_test.shape[0], X_test.shape[2]), predictions), axis=1))[:, -1].reshape(-1, 1)
+min_close = stock_data['Close'].min()
+max_close = stock_data['Close'].max()
 
-concatenated_data = np.concatenate((X_test.reshape(X_test.shape[0], X_test.shape[2]), predictions), axis=1)
-denormalized_predictions = scaler.inverse_transform(concatenated_data)
-denormalized_predictions = denormalized_predictions[:, -1].reshape(-1, 1)
+denormalized_predictions = scaler.inverse_transform(np.concatenate((X_test.reshape(X_test.shape[0], X_test.shape[2]), predictions), axis=1))[:, -1].reshape( -1, 1)
 
-min_close = stock.data['Close'].min()
-max_close = stock.data['Close'].max()
 denormalized_predictions = (denormalized_predictions * (max_close - min_close)) + min_close
 
 # plot the predicted and actual prices
